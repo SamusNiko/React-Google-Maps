@@ -4,10 +4,10 @@ import { connect } from 'react-redux';
 
 import Map from '@/components/Map';
 import ModalWindow from '@/components/ModalWindow';
-import { mapURL } from '@/constants/services'
-import {
-  getLocations,
-} from '@/actions/actionsMap'
+import { mapURL } from '@/constants';
+import { getLocations } from '@/actions';
+
+import './styles.css';
 
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
@@ -19,9 +19,9 @@ class App extends React.Component {
     this.state = {
       event: null,
       currentItemIndex: null,
-      modalInputValue: '',
-      visibleCreator: false,
-      visibleRedactor: false,
+      inputValue: '',
+      isCreator: false,
+      isRedactor: false,
     }
   }
 
@@ -30,111 +30,111 @@ class App extends React.Component {
   }
 
   connectDB(f) {
-    var openRequest = indexedDB.open("locations", 2);
+    var openRequest = indexedDB.open('locations', 2);
     openRequest.onupgradeneeded = function (e) {
       var thisDB = e.target.result;
-      if (!thisDB.objectStoreNames.contains("markers")) {
-        thisDB.createObjectStore("markers", { keyPath: "key" });
+      if (!thisDB.objectStoreNames.contains('markers')) {
+        thisDB.createObjectStore('markers', { keyPath: 'key' });
       }
     }
     openRequest.onsuccess = function (e) {
-      console.log("Success!");
+      console.log('Success!');
       db = e.target.result;
       f();
     }
     openRequest.onerror = function (e) {
-      console.log("Error");
+      console.log('Error');
       console.dir(e);
     }
   };
 
   addMarker(newMarker) {
-    var transaction = db.transaction(["markers"], "readwrite");
-    var store = transaction.objectStore("markers");
+    var transaction = db.transaction(['markers'], 'readwrite');
+    var store = transaction.objectStore('markers');
     var request = store.add(newMarker);
     request.onerror = function (e) {
-      console.log("Error", e.target.error.name);
+      console.log('Error', e.target.error.name);
     }
     request.onsuccess = this.getMarkers();
   }
 
   updateMarker(marker) {
-    var transaction = db.transaction(["markers"], "readwrite");
-    var store = transaction.objectStore("markers");
+    var transaction = db.transaction(['markers'], 'readwrite');
+    var store = transaction.objectStore('markers');
     var request = store.put(marker);
     request.onerror = function (e) {
-      console.log("Error", e.target.error.name);
+      console.log('Error', e.target.error.name);
     }
     request.onsuccess = this.getMarkers();
   }
 
   deleteMarker(marker) {
-    var transaction = db.transaction(["markers"], "readwrite");
-    var store = transaction.objectStore("markers");
+    var transaction = db.transaction(['markers'], 'readwrite');
+    var store = transaction.objectStore('markers');
     var request = store.delete(marker);
     request.onerror = function (e) {
-      console.log("Error", e.target.error.name);
+      console.log('Error', e.target.error.name);
     };
     request.onsuccess = this.getMarkers();
   }
-  
+
   getMarkers = (e) => {
-    var transaction = db.transaction(["markers"], "readonly");
-    var store = transaction.objectStore("markers");
+    const { getLocations } = this.props;
+    var transaction = db.transaction(['markers'], 'readonly');
+    var store = transaction.objectStore('markers');
     var request = store.getAll();
     request.onsuccess = (e) => {
       var newState = e.target.result;
-      this.props.getLocations(newState);
+      getLocations(newState);
     }
   };
 
   showCreator() {
     this.setState({
-      visibleCreator: true,
+      isCreator: true,
     });
   };
 
   showRedactor() {
     this.setState({
-      visibleRedactor: true,
+      isRedactor: true,
 
     });
   };
 
   handleOkCreator = () => {
-    const event = { ...this.state.event };
-    const modalInputValue = this.state.modalInputValue;
+    const { event, inputValue } = this.state;
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
     const newMarker = {
       key: '' + lat + lng,
       lat: lat,
       lng: lng,
-      description: modalInputValue,
+      description: inputValue,
     }
     if (newMarker.description !== '') {
       this.addMarker(newMarker);
-      this.setState({ modalInputValue: '', event: null, visibleCreator: false });
+      this.setState({ inputValue: '', event: null, isCreator: false });
     } else {
-      alert('please, enter description');
+      alert('Please, enter description');
     }
   };
 
   handleCancel = () => {
     this.setState({
-      visibleCreator: false, visibleRedactor: false, modalInputValue: '', event: null
+      isCreator: false, isRedactor: false, inputValue: '', event: null
     });
   };
 
 
 
-  handleOkRedactor = () => {
+  handleSaveRedactor = () => {
     const index = this.state.currentItemIndex;
     const currentMarker = { ...this.props.locations[index] };
-    currentMarker.description = this.state.modalInputValue;
+    currentMarker.description = this.state.inputValue;
     this.updateMarker(currentMarker);
     this.setState({
-      visibleRedactor: false, modalInputValue: '', event: null
+      isRedactor: false, inputValue: '', event: null
     });
   };
 
@@ -142,16 +142,16 @@ class App extends React.Component {
     const index = this.state.currentItemIndex;
     const marker = { ...this.props.locations[index] };
     this.deleteMarker(marker.key);
-    this.setState({ modalInputValue: '', visibleRedactor: false });
+    this.setState({ inputValue: '', isRedactor: false });
   };
 
-  modalInputChange = (event) => {
-    this.setState({ modalInputValue: event.target.value });
+  handleInputChange = (event) => {
+    this.setState({ inputValue: event.target.value });
   };
 
 
   handleMarkerClick = (item, index) => {
-    this.setState({ currentItemIndex: index, modalInputValue: item.description });
+    this.setState({ currentItemIndex: index, inputValue: item.description });
     this.showRedactor();
   };
 
@@ -162,30 +162,31 @@ class App extends React.Component {
 
   render() {
     const {
-      visibleCreator,
-      visibleRedactor,
-      modalInputValue,
+      isCreator,
+      isRedactor,
+      inputValue,
     } = this.state;
     const { locations } = this.props;
     return (
       <Layout>
-        <Header className="header">
+        <Header className="header" style={{ height: '10hv' }}>
           <div className="logo" />
           <Menu
             theme="dark"
             mode="horizontal"
-            defaultSelectedKeys={['2']}
-            style={{ lineHeight: '64px' }}
+            style={{ lineHeight: '64px', }}
           >
             <Menu.Item key="1">Map</Menu.Item>
           </Menu>
         </Header>
-        <Layout>
-          <Sider width={200} style={{ background: '#fff' }}>
+        <Layout className="layoutSideMenu">
+          <Sider
+            className="sideMenu"
+            width={200}
+            style={{ background: '#fff' }}
+          >
             <Menu
               mode="inline"
-              defaultSelectedKeys={['1']}
-              defaultOpenKeys={['sub1']}
               style={{ height: '100%', borderRight: 0 }}
             >
               <SubMenu
@@ -194,7 +195,7 @@ class App extends React.Component {
                   <span>
                     <Icon type="environment" />
                     Locations
-              </span>
+                  </span>
                 }
               >
                 {locations.map((item, index) => {
@@ -206,7 +207,7 @@ class App extends React.Component {
               </SubMenu>
             </Menu>
           </Sider>
-          <Layout style={{ padding: '5px' }}>
+          <Layout>
             <Content
               style={{
                 background: '#fff',
@@ -216,9 +217,9 @@ class App extends React.Component {
             >
               <Map
                 googleMapURL={mapURL}
-                loadingElement={<div style={{ height: `100%` }} />}
-                containerElement={<div style={{ height: `640px` }} />}
-                mapElement={<div style={{ height: `100%` }} />}
+                loadingElement={<div style={{ height: '100%' }} />}
+                containerElement={<div style={{ height: '90vh' }} />}
+                mapElement={<div style={{ height: '100%' }} />}
                 locations={locations}
                 handleMapClick={this.handleMapClick}
                 handleMarkerClick={this.handleMarkerClick}
@@ -227,13 +228,13 @@ class App extends React.Component {
 
               <ModalWindow
                 handleOkCreator={this.handleOkCreator}
-                visibleCreator={visibleCreator}
+                isCreator={isCreator}
                 handleDeleteRedactor={this.handleDeleteRedactor}
                 handleCancel={this.handleCancel}
-                handleOkRedactor={this.handleOkRedactor}
-                visibleRedactor={visibleRedactor}
-                modalInputValue={modalInputValue}
-                modalInputChange={this.modalInputChange}
+                handleSaveRedactor={this.handleSaveRedactor}
+                isRedactor={isRedactor}
+                inputValue={inputValue}
+                handleInputChange={this.handleInputChange}
               />
             </Content>
           </Layout>

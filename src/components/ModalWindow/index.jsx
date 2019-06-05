@@ -13,33 +13,30 @@ class ModalWindow extends Component {
       cancelText: 'No',
       onOk() {
         handleDeleteRedactor();
-      },
-      onCancel() {
-        console.log('Cancel');
-      },
+      }
     });
   }
 
-  renderModalCreator() {
+  renderCreator() {
     const {
-      visibleCreator,
+      isCreator,
       handleOkCreator,
       handleCancel,
-      modalInputChange,
-      modalInputValue,
+      handleInputChange,
+      inputValue,
     } = this.props;
     return (
       <div>
         <Modal
           title="Creat new marker"
-          visible={visibleCreator}
+          visible={isCreator}
           onOk={handleOkCreator}
           onCancel={handleCancel}
         >
           <Input
             size="small"
-            onChange={modalInputChange}
-            value={modalInputValue}
+            onChange={handleInputChange}
+            value={inputValue}
             placeholder="Description"
           />
         </Modal>
@@ -47,23 +44,23 @@ class ModalWindow extends Component {
     );
   }
 
-  renderModalRedactor() {
+  renderRedactor() {
     const {
-      visibleRedactor,
-      handleOkRedactor,
+      isRedactor,
+      handleSaveRedactor,
       handleCancel,
-      modalInputChange,
-      modalInputValue,
+      handleInputChange,
+      inputValue,
     } = this.props;
     return (
       <div>
         <Modal
           title="Redact your marker"
-          visible={visibleRedactor}
-          onOk={handleOkRedactor}
+          visible={isRedactor}
+          onOk={handleSaveRedactor}
           onCancel={handleCancel}
           footer={[
-            <Button key="save" type="primary" onClick={handleOkRedactor}>
+            <Button key="save" type="primary" onClick={handleSaveRedactor}>
               Save
             </Button>,
             <Button key="delete" type="danger" onClick={this.showDeleteConfirm}>
@@ -76,8 +73,8 @@ class ModalWindow extends Component {
         >
           <Input
             size="small"
-            onChange={modalInputChange}
-            value={modalInputValue}
+            onChange={handleInputChange}
+            value={inputValue}
             placeholder="Description" />
         </Modal>
       </div>
@@ -86,13 +83,13 @@ class ModalWindow extends Component {
 
   render() {
     const {
-      visibleCreator,
-      visibleRedactor
+      isCreator,
+      isRedactor
     } = this.props;
-    if (visibleCreator) {
-      return this.renderModalCreator();
-    } if (visibleRedactor) {
-      return this.renderModalRedactor();
+    if (isCreator) {
+      return this.renderCreator();
+    } if (isRedactor) {
+      return this.renderRedactor();
     } return null;
   }
 }

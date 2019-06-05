@@ -1,4 +1,4 @@
-import actionConst from '@/constants/actions';
+import { GET_LOCATIONS } from '@/constants';
 
 const initialState = {
   locations: [],
@@ -6,7 +6,7 @@ const initialState = {
 
 export default function mapReducer(state = initialState, action) {
   switch (action.type) {
-    case actionConst.GET_LOCATIONS:
+    case GET_LOCATIONS:
       return {
         ...state, locations: action.payload,
       };

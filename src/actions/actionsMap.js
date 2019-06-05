@@ -1,8 +1,8 @@
-import actionConst from '@/constants/actions';
+import {GET_LOCATIONS} from '@/constants';
 
 export function getLocations(data) {
   return {
-    type: actionConst.GET_LOCATIONS,
+    type: GET_LOCATIONS,
     payload: data,
   };
 }
