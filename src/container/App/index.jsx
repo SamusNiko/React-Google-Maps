@@ -21,7 +21,7 @@ class App extends React.Component {
       currentItemIndex: null,
       modalInputValue: '',
       visibleCreator: false,
-      visibleReadctor: false,
+      visibleRedactor: false,
     }
   }
 
@@ -96,7 +96,7 @@ class App extends React.Component {
 
   showRedactor() {
     this.setState({
-      visibleReadctor: true,
+      visibleRedactor: true,
 
     });
   };
@@ -116,13 +116,13 @@ class App extends React.Component {
       this.addMarker(newMarker);
       this.setState({ modalInputValue: '', event: null, visibleCreator: false });
     } else {
-      alert('pleas, enter description');
+      alert('please, enter description');
     }
   };
 
   handleCancel = () => {
     this.setState({
-      visibleCreator: false, visibleReadctor: false, modalInputValue: '', event: null
+      visibleCreator: false, visibleRedactor: false, modalInputValue: '', event: null
     });
   };
 
@@ -134,7 +134,7 @@ class App extends React.Component {
     currentMarker.description = this.state.modalInputValue;
     this.updateMarker(currentMarker);
     this.setState({
-      visibleReadctor: false, modalInputValue: '', event: null
+      visibleRedactor: false, modalInputValue: '', event: null
     });
   };
 
@@ -142,7 +142,7 @@ class App extends React.Component {
     const index = this.state.currentItemIndex;
     const marker = { ...this.props.favoritLocations[index] };
     this.deleteMarker(marker.key);
-    this.setState({ modalInputValue: '', visibleReadctor: false });
+    this.setState({ modalInputValue: '', visibleRedactor: false });
   };
 
   modalInputChange = (event) => {
@@ -163,7 +163,7 @@ class App extends React.Component {
   render() {
     const {
       visibleCreator,
-      visibleReadctor,
+      visibleRedactor,
       modalInputValue,
     } = this.state;
     const { favoritLocations } = this.props;
@@ -231,7 +231,7 @@ class App extends React.Component {
                 handleDeleteRedactor={this.handleDeleteRedactor}
                 handleCancel={this.handleCancel}
                 handleOkRedactor={this.handleOkRedactor}
-                visibleRedactor={visibleReadctor}
+                visibleRedactor={visibleRedactor}
                 modalInputValue={modalInputValue}
                 modalInputChange={this.modalInputChange}
               />
