@@ -7,14 +7,14 @@ import {
 } from 'react-google-maps';
 
 const Map = withScriptjs(withGoogleMap((props) => {
-  const { favoritLocations } = props;
+  const { locations } = props;
   return (
     <GoogleMap
       defaultZoom={15}
       defaultCenter={{ lat: 53.904541, lng: 27.561523 }}
       onClick={props.handleMapClick}
     >
-      {favoritLocations.map((item, index) => (
+      {locations.map((item, index) => (
         <Marker
           key={item.key}
           onClick={() => props.handleMarkerClick(item, index)}

@@ -130,7 +130,7 @@ class App extends React.Component {
 
   handleOkRedactor = () => {
     const index = this.state.currentItemIndex;
-    const currentMarker = { ...this.props.favoritLocations[index] };
+    const currentMarker = { ...this.props.locations[index] };
     currentMarker.description = this.state.modalInputValue;
     this.updateMarker(currentMarker);
     this.setState({
@@ -140,7 +140,7 @@ class App extends React.Component {
 
   handleDeleteRedactor = () => {
     const index = this.state.currentItemIndex;
-    const marker = { ...this.props.favoritLocations[index] };
+    const marker = { ...this.props.locations[index] };
     this.deleteMarker(marker.key);
     this.setState({ modalInputValue: '', visibleRedactor: false });
   };
@@ -166,7 +166,7 @@ class App extends React.Component {
       visibleRedactor,
       modalInputValue,
     } = this.state;
-    const { favoritLocations } = this.props;
+    const { locations } = this.props;
     return (
       <Layout>
         <Header className="header">
@@ -197,7 +197,7 @@ class App extends React.Component {
               </span>
                 }
               >
-                {favoritLocations.map((item, index) => {
+                {locations.map((item, index) => {
                   return (
                     <Menu.Item key={index + 'item'}>
                       <span onClick={() => this.handleMarkerClick(item, index)}>{item.description}</span>
@@ -219,7 +219,7 @@ class App extends React.Component {
                 loadingElement={<div style={{ height: `100%` }} />}
                 containerElement={<div style={{ height: `640px` }} />}
                 mapElement={<div style={{ height: `100%` }} />}
-                favoritLocations={favoritLocations}
+                locations={locations}
                 handleMapClick={this.handleMapClick}
                 handleMarkerClick={this.handleMarkerClick}
                 isMarkerShown
@@ -245,7 +245,7 @@ class App extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    favoritLocations: state.favoritLocations,
+    locations: state.locations,
   };
 }
 
