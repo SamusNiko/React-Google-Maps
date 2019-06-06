@@ -1,17 +1,19 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+import noop from 'react-props-noop';
 import { Layout, Menu, Icon } from 'antd';
 import { connect } from 'react-redux';
 
 import Map from '@/components/Map';
 import ModalWindow from '@/components/ModalWindow';
-import { mapURL } from '@/constants';
-import { getLocations } from '@/actions';
+import mapURL from '@/constants/services';
+import getLocations from '@/actions';
 
 import './styles.css';
 
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
-var db;
+let db;
 
 class App extends React.Component {
   constructor(props) {
@@ -21,85 +23,84 @@ class App extends React.Component {
       currentItemIndex: null,
       inputValue: '',
       isCreator: false,
-      isRedactor: false,
-    }
+      isRedactor: false
+    };
   }
 
   componentDidMount() {
     this.connectDB(this.getMarkers);
   }
 
-  connectDB(f) {
-    var openRequest = indexedDB.open('locations', 2);
-    openRequest.onupgradeneeded = function (e) {
-      var thisDB = e.target.result;
+  handleMarkerClick = (item, index) => {
+    this.setState({ currentItemIndex: index, inputValue: item.description });
+    this.showRedactor();
+  };
+
+  handleMapClick = event => {
+    this.setState({ event });
+    this.showCreator();
+  };
+
+  connectDB = f => {
+    const openRequest = indexedDB.open('locations', 2);
+    openRequest.onupgradeneeded = e => {
+      const thisDB = e.target.result;
       if (!thisDB.objectStoreNames.contains('markers')) {
         thisDB.createObjectStore('markers', { keyPath: 'key' });
       }
-    }
-    openRequest.onsuccess = function (e) {
-      console.log('Success!');
+    };
+    openRequest.onsuccess = e => {
       db = e.target.result;
       f();
-    }
-    openRequest.onerror = function (e) {
-      console.log('Error');
-      console.dir(e);
-    }
+    };
+    openRequest.onerror = e => {
+      console.log('Error', e.target.error.name);
+    };
   };
 
-  addMarker(newMarker) {
-    var transaction = db.transaction(['markers'], 'readwrite');
-    var store = transaction.objectStore('markers');
-    var request = store.add(newMarker);
-    request.onerror = function (e) {
-      console.log('Error', e.target.error.name);
-    }
-    request.onsuccess = this.getMarkers();
-  }
-
-  updateMarker(marker) {
-    var transaction = db.transaction(['markers'], 'readwrite');
-    var store = transaction.objectStore('markers');
-    var request = store.put(marker);
-    request.onerror = function (e) {
-      console.log('Error', e.target.error.name);
-    }
-    request.onsuccess = this.getMarkers();
-  }
-
-  deleteMarker(marker) {
-    var transaction = db.transaction(['markers'], 'readwrite');
-    var store = transaction.objectStore('markers');
-    var request = store.delete(marker);
-    request.onerror = function (e) {
+  addMarker = newMarker => {
+    const transaction = db.transaction(['markers'], 'readwrite');
+    const store = transaction.objectStore('markers');
+    const request = store.add(newMarker);
+    request.onerror = e => {
       console.log('Error', e.target.error.name);
     };
     request.onsuccess = this.getMarkers();
-  }
-
-  getMarkers = (e) => {
-    const { getLocations } = this.props;
-    var transaction = db.transaction(['markers'], 'readonly');
-    var store = transaction.objectStore('markers');
-    var request = store.getAll();
-    request.onsuccess = (e) => {
-      var newState = e.target.result;
-      getLocations(newState);
-    }
   };
 
-  showCreator() {
-    this.setState({
-      isCreator: true,
-    });
+  updateMarker = marker => {
+    const transaction = db.transaction(['markers'], 'readwrite');
+    const store = transaction.objectStore('markers');
+    const request = store.put(marker);
+    request.onerror = e => {
+      console.log('Error', e.target.error.name);
+    };
+    request.onsuccess = this.getMarkers();
   };
 
-  showRedactor() {
-    this.setState({
-      isRedactor: true,
+  deleteMarker = marker => {
+    const transaction = db.transaction(['markers'], 'readwrite');
+    const store = transaction.objectStore('markers');
+    const request = store.delete(marker);
+    request.onerror = e => {
+      console.log('Error', e.target.error.name);
+    };
+    request.onsuccess = this.getMarkers();
+  };
 
-    });
+  getMarkers = () => {
+    const { getLocationsProps } = this.props;
+    const transaction = db.transaction(['markers'], 'readonly');
+    const store = transaction.objectStore('markers');
+    const request = store.getAll();
+    request.onsuccess = e => {
+      const newState = e.target.result;
+      getLocationsProps(newState);
+    };
+  };
+
+  handleInputChange = event => {
+    this.setState({ inputValue: event.target.value });
   };
 
   handleOkCreator = () => {
@@ -107,11 +108,11 @@ class App extends React.Component {
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
     const newMarker = {
-      key: '' + lat + lng,
-      lat: lat,
-      lng: lng,
-      description: inputValue,
-    }
+      key: `${lat}${lng}`,
+      lat,
+      lng,
+      description: inputValue
+    };
     if (newMarker.description !== '') {
       this.addMarker(newMarker);
       this.setState({ inputValue: '', event: null, isCreator: false });
@@ -122,73 +123,60 @@ class App extends React.Component {
 
   handleCancel = () => {
     this.setState({
-      isCreator: false, isRedactor: false, inputValue: '', event: null
+      isCreator: false,
+      isRedactor: false,
+      inputValue: '',
+      event: null
     });
   };
 
-
-
   handleSaveRedactor = () => {
-    const index = this.state.currentItemIndex;
-    const currentMarker = { ...this.props.locations[index] };
-    currentMarker.description = this.state.inputValue;
+    const { currentItemIndex, inputValue } = this.state;
+    const { locations } = this.props;
+    const currentMarker = locations[currentItemIndex];
+    currentMarker.description = inputValue;
     this.updateMarker(currentMarker);
     this.setState({
-      isRedactor: false, inputValue: '', event: null
+      isRedactor: false,
+      inputValue: '',
+      event: null
     });
   };
 
   handleDeleteRedactor = () => {
-    const index = this.state.currentItemIndex;
-    const marker = { ...this.props.locations[index] };
+    const { currentItemIndex } = this.state;
+    const { locations } = this.props;
+    const marker = { ...locations[currentItemIndex] };
     this.deleteMarker(marker.key);
     this.setState({ inputValue: '', isRedactor: false });
   };
 
-  handleInputChange = (event) => {
-    this.setState({ inputValue: event.target.value });
-  };
+  showCreator() {
+    this.setState({
+      isCreator: true
+    });
+  }
 
-
-  handleMarkerClick = (item, index) => {
-    this.setState({ currentItemIndex: index, inputValue: item.description });
-    this.showRedactor();
-  };
-
-  handleMapClick = (event) => {
-    this.setState({ event });
-    this.showCreator();
-  };
+  showRedactor() {
+    this.setState({
+      isRedactor: true
+    });
+  }
 
   render() {
-    const {
-      isCreator,
-      isRedactor,
-      inputValue,
-    } = this.state;
+    const { isCreator, isRedactor, inputValue } = this.state;
     const { locations } = this.props;
     return (
       <Layout>
         <Header className="header" style={{ height: '10hv' }}>
           <div className="logo" />
-          <Menu
-            theme="dark"
-            mode="horizontal"
-            style={{ lineHeight: '64px', }}
-          >
+          <Menu theme="dark" mode="horizontal" style={{ lineHeight: '64px' }}>
             <Menu.Item key="1">Map</Menu.Item>
           </Menu>
         </Header>
         <Layout className="layoutSideMenu">
-          <Sider
-            className="sideMenu"
-            width={200}
-            style={{ background: '#fff' }}
-          >
-            <Menu
-              mode="inline"
-              style={{ height: '100%', borderRight: 0 }}
-            >
+          <Sider className="sideMenu" width={200} style={{ background: '#fff' }}>
+            <Menu mode="inline" style={{ height: '100%', borderRight: 0 }}>
               <SubMenu
                 key="sub1"
                 title={
@@ -200,9 +188,10 @@ class App extends React.Component {
               >
                 {locations.map((item, index) => {
                   return (
-                    <Menu.Item key={index + 'item'}>
-                      <span onClick={() => this.handleMarkerClick(item, index)}>{item.description}</span>
-                    </Menu.Item>)
+                    <Menu.Item key={item.key} onClick={() => this.handleMarkerClick(item, index)}>
+                      <span>{item.description}</span>
+                    </Menu.Item>
+                  );
                 })}
               </SubMenu>
             </Menu>
@@ -212,7 +201,7 @@ class App extends React.Component {
               style={{
                 background: '#fff',
                 margin: 0,
-                minHeight: 480,
+                minHeight: 480
               }}
             >
               <Map
@@ -239,21 +228,34 @@ class App extends React.Component {
             </Content>
           </Layout>
         </Layout>
-      </Layout >
-    )
+      </Layout>
+    );
   }
 }
 
+App.propTypes = {
+  locations: PropTypes.arrayOf(PropTypes.object),
+  getLocationsProps: PropTypes.func
+};
+
+App.defaultProps = {
+  locations: [],
+  getLocationsProps: noop
+};
+
 function mapStateToProps(state) {
   return {
-    locations: state.locations,
+    locations: state.locations
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
-    getLocations: newState => dispatch(getLocations(newState)),
+    getLocationsProps: newState => dispatch(getLocations(newState))
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(App);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(App);

@@ -1,0 +1,40 @@
+{
+  "extends": ["airbnb", "plugin:prettier/recommended", "prettier/react"],
+  "plugins": ["react", "prettier"],
+  "parser": "babel-eslint",
+  "env": {
+    "browser": true,
+    "commonjs": true,
+    "es6": true,
+    "jest": true,
+    "node": true
+  },
+  "globals": {
+    "Atomics": "readonly",
+    "SharedArrayBuffer": "readonly"
+  },
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "ecmaVersion": 2018,
+    "sourceType": "module"
+  },
+  "settings": {
+    "import/resolver": {
+      "alias": {
+        "map": [
+          ["babel-polyfill", "babel-polyfill/dist/polyfill.min.js"],
+          ["helper", "./utils/helper"],
+          ["material-ui/DatePicker", "../custom/DatePicker"],
+          ["material-ui", "material-ui-ie10"],
+          ["@", "./src"]
+        ],
+        "extensions": [".ts", ".js", ".jsx", ".json"]
+      }
+    }
+  },
+  "rules": {
+    "prettier/prettier": ["error"]
+  }
+}

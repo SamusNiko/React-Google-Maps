@@ -1,8 +1,8 @@
-@media screen and (max-width: 465px){
-  .layoutSideMenu{
-      display: block;
-      }
-  .sideMenu{
+@media screen and (max-width: 465px) {
+  .layoutSideMenu {
+    display: block;
+  }
+  .sideMenu {
     display: inline;
   }
 }
