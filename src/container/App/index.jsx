@@ -6,8 +6,8 @@ import { connect } from 'react-redux';
 
 import Map from '@/components/Map';
 import ModalWindow from '@/components/ModalWindow';
-import mapURL from '@/constants/services';
-import getLocations from '@/actions';
+import { mapURL } from '@/constants';
+import { getLocations } from '@/actions';
 
 import './styles.css';
 

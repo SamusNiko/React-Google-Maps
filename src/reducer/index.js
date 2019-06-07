@@ -1,4 +1,4 @@
-import GET_LOCATIONS from '@/constants/actions';
+import { GET_LOCATIONS } from '@/constants';
 
 const initialState = {
   locations: []
