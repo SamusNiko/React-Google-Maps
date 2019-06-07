@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import noop from 'react-props-noop';
-import { Layout, Menu, Icon } from 'antd';
+import { Layout, message, Menu, Icon } from 'antd';
 import { connect } from 'react-redux';
 
 import Map from '@/components/Map';
@@ -54,7 +54,7 @@ class App extends React.Component {
       f();
     };
     openRequest.onerror = e => {
-      console.log('Error', e.target.error.name);
+      message.error(e.target.error.name);
     };
   };
 
@@ -63,7 +63,7 @@ class App extends React.Component {
     const store = transaction.objectStore('markers');
     const request = store.add(newMarker);
     request.onerror = e => {
-      console.log('Error', e.target.error.name);
+      message.error(e.target.error.name);
     };
     request.onsuccess = this.getMarkers();
   };
@@ -73,7 +73,7 @@ class App extends React.Component {
     const store = transaction.objectStore('markers');
     const request = store.put(marker);
     request.onerror = e => {
-      console.log('Error', e.target.error.name);
+      message.error(e.target.error.name);
     };
     request.onsuccess = this.getMarkers();
   };
@@ -83,7 +83,7 @@ class App extends React.Component {
     const store = transaction.objectStore('markers');
     const request = store.delete(marker);
     request.onerror = e => {
-      console.log('Error', e.target.error.name);
+      message.error(e.target.error.name);
     };
     request.onsuccess = this.getMarkers();
   };
@@ -117,7 +117,7 @@ class App extends React.Component {
       this.addMarker(newMarker);
       this.setState({ inputValue: '', event: null, isCreator: false });
     } else {
-      alert('Please, enter description');
+      message.warning('Please, enter description');
     }
   };
 
