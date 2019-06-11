@@ -4,5 +4,9 @@
   }
   .sideMenu {
     display: inline;
+    width: 100%;
+  }
+  .ant-menu-submenu-title {
+    max-width: 100%;
   }
 }
