@@ -6,7 +6,6 @@ import { connect } from 'react-redux';
 
 import Map from '@/components/Map';
 import ModalWindow from '@/components/ModalWindow';
-import { mapURL } from '@/constants';
 import { getLocations } from '@/actions';
 
 import './styles.css';
@@ -34,6 +33,12 @@ class App extends React.Component {
   handleMarkerClick = (item, index) => {
     this.setState({ currentItemIndex: index, inputValue: item.description });
     this.showRedactor();
+  };
+
+  handleClusterClick = () => {
+    this.setState({
+      isCreator: false
+    });
   };
 
   handleMapClick = event => {
@@ -176,7 +181,7 @@ class App extends React.Component {
         </Header>
         <Layout className="layoutSideMenu">
           <Sider className="sideMenu" width={200} style={{ background: '#fff' }}>
-            <Menu mode="inline" style={{ height: '100%', borderRight: 0 }}>
+            <Menu mode="inline" style={{ height: '100%' }}>
               <SubMenu
                 key="sub1"
                 title={
@@ -201,20 +206,15 @@ class App extends React.Component {
               style={{
                 background: '#fff',
                 margin: 0,
-                minHeight: 480
+                minHeight: '85vh'
               }}
             >
               <Map
-                googleMapURL={mapURL}
-                loadingElement={<div style={{ height: '100%' }} />}
-                containerElement={<div style={{ height: '90vh' }} />}
-                mapElement={<div style={{ height: '100%' }} />}
                 locations={locations}
                 handleMapClick={this.handleMapClick}
+                handleClusterClick={this.handleClusterClick}
                 handleMarkerClick={this.handleMarkerClick}
-                isMarkerShown
               />
-
               <ModalWindow
                 handleOkCreator={this.handleOkCreator}
                 isCreator={isCreator}
