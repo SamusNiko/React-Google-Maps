@@ -25,9 +25,9 @@ const Map = compose(
       handleClusterClick: () => item => {
         const { points } = item;
         let latMax = points[0].lat;
-        let lngMax = points[0].lng;
         let latMin = points[0].lat;
-        let lngMin = points[0].lat;
+        let lngMax = points[0].lng;
+        let lngMin = points[0].lng;
         for (let i = 1; i < points.length; i += 1) {
           if (latMax < points[i].lat) {
             latMax = points[i].lat;
