@@ -1,8 +1,9 @@
 import React from 'react';
 import { withScriptjs, withGoogleMap, GoogleMap, Marker } from 'react-google-maps';
-import { mapURL } from '@/constants';
+import { MarkerWithLabel } from 'react-google-maps/lib/components/addons/MarkerWithLabel';
+import { compose, withProps, withHandlers } from 'recompose';
 
-const { compose, withProps, withHandlers } = require('recompose');
+import { mapURL } from '@/constants';
 
 const iconUrl = require(`@/image/m5.png`);
 
@@ -77,17 +78,26 @@ const Map = compose(
           );
         }
         return (
-          <Marker
+          <MarkerWithLabel
+            labelAnchor={new window.google.maps.Point(10, 13)}
+            labelStyle={{
+              width: '20px',
+              height: '20px',
+              textAlign: 'center',
+              fontSize: '14px',
+              pointerEvents: 'none'
+            }}
             icon={{
               url: iconUrl,
               scaledSize: new window.google.maps.Size(50, 50),
               anchor: new window.google.maps.Point(25, 30)
             }}
-            label={`${item.numPoints}`}
             key={item.id}
             onClick={() => props.handleClusterClick(item)}
             position={{ lat: item.lat, lng: item.lng }}
-          />
+          >
+            <div>{item.numPoints}</div>
+          </MarkerWithLabel>
         );
       })}
     </GoogleMap>
