@@ -1,7 +1,8 @@
-import { GET_LOCATIONS } from '@/constants';
+import { GET_LOCATIONS, GET_CLUSTERS } from '@/constants';
 
 const initialState = {
-  locations: []
+  locations: [],
+  clusters: []
 };
 
 export default function mapReducer(state = initialState, action) {
@@ -10,6 +11,11 @@ export default function mapReducer(state = initialState, action) {
       return {
         ...state,
         locations: action.payload
+      };
+    case GET_CLUSTERS:
+      return {
+        ...state,
+        clusters: action.payload
       };
     default: {
       return state;

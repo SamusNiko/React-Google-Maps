@@ -3,10 +3,10 @@ import PropTypes from 'prop-types';
 import noop from 'react-props-noop';
 import { Layout, message, Menu, Icon } from 'antd';
 import { connect } from 'react-redux';
-
+import supercluster from 'points-cluster';
 import Map from '@/components/Map';
 import ModalWindow from '@/components/ModalWindow';
-import { getLocations } from '@/actions';
+import { getLocations, getClustersState } from '@/actions';
 
 import './styles.css';
 
@@ -19,10 +19,20 @@ class App extends React.Component {
     super(props);
     this.state = {
       event: null,
-      currentItemIndex: null,
+      currentItemKey: null,
       inputValue: '',
       isCreator: false,
-      isRedactor: false
+      isRedactor: false,
+      mapOptions: {
+        center: { lat: 53.904541, lng: 27.561523 },
+        zoom: 9,
+        bounds: {
+          ne: { lat: 89.95945216608882, lng: 180 },
+          nw: { lat: 89.95945216608882, lng: -180 },
+          se: { lat: -89.99206264637093, lng: 180 },
+          sw: { lat: -89.99206264637093, lng: -180 }
+        }
+      }
     };
   }
 
@@ -30,15 +40,52 @@ class App extends React.Component {
     this.connectDB(this.getMarkers);
   }
 
-  handleMarkerClick = (item, index) => {
-    this.setState({ currentItemIndex: index, inputValue: item.description });
+  getClusters = () => {
+    const { locations } = this.props;
+    const { mapOptions } = this.state;
+    const clusters = supercluster(locations, {
+      minZoom: 0,
+      maxZoom: 16,
+      radius: 60
+    });
+    return clusters(mapOptions);
+  };
+
+  createClusters = () => {
+    const { getClustersProps } = this.props;
+    const data = this.getClusters().map(e => {
+      return {
+        lat: e.wy,
+        lng: e.wx,
+        numPoints: e.numPoints,
+        id: `${e.numPoints}_${e.points[0].key}`,
+        points: e.points,
+        zoom: e.zoom
+      };
+    });
+    getClustersProps(data);
+  };
+
+  handleMapChange = ({ center, zoom, bounds }) => {
+    this.setState({
+      mapOptions: {
+        center,
+        zoom,
+        bounds
+      }
+    });
+    this.createClusters();
+  };
+
+  handleMarkerClick = item => {
+    const currentMarker = item.points[0];
+    this.setState({ currentItemKey: currentMarker.key, inputValue: currentMarker.description });
     this.showRedactor();
   };
 
-  handleClusterClick = () => {
-    this.setState({
-      isCreator: false
-    });
+  handleMenuItemClick = item => {
+    this.setState({ currentItemKey: item.key, inputValue: item.description });
+    this.showRedactor();
   };
 
   handleMapClick = event => {
@@ -83,10 +130,10 @@ class App extends React.Component {
     request.onsuccess = this.getMarkers();
   };
 
-  deleteMarker = marker => {
+  deleteMarker = key => {
     const transaction = db.transaction(['markers'], 'readwrite');
     const store = transaction.objectStore('markers');
-    const request = store.delete(marker);
+    const request = store.delete(key);
     request.onerror = e => {
       message.error(e.target.error.name);
     };
@@ -101,6 +148,7 @@ class App extends React.Component {
     request.onsuccess = e => {
       const newState = e.target.result;
       getLocationsProps(newState);
+      this.createClusters();
     };
   };
 
@@ -136,9 +184,9 @@ class App extends React.Component {
   };
 
   handleSaveRedactor = () => {
-    const { currentItemIndex, inputValue } = this.state;
+    const { currentItemKey, inputValue } = this.state;
     const { locations } = this.props;
-    const currentMarker = locations[currentItemIndex];
+    const currentMarker = locations.find(item => item.key === currentItemKey);
     currentMarker.description = inputValue;
     this.updateMarker(currentMarker);
     this.setState({
@@ -149,11 +197,12 @@ class App extends React.Component {
   };
 
   handleDeleteRedactor = () => {
-    const { currentItemIndex } = this.state;
-    const { locations } = this.props;
-    const marker = { ...locations[currentItemIndex] };
-    this.deleteMarker(marker.key);
-    this.setState({ inputValue: '', isRedactor: false });
+    const { currentItemKey } = this.state;
+    this.deleteMarker(currentItemKey);
+    this.setState({
+      inputValue: '',
+      isRedactor: false
+    });
   };
 
   showCreator() {
@@ -169,8 +218,8 @@ class App extends React.Component {
   }
 
   render() {
-    const { isCreator, isRedactor, inputValue } = this.state;
-    const { locations } = this.props;
+    const { isCreator, isRedactor, inputValue, mapOptions } = this.state;
+    const { locations, clusters } = this.props;
     return (
       <Layout>
         <Header className="header" style={{ height: '10hv' }}>
@@ -191,9 +240,9 @@ class App extends React.Component {
                   </span>
                 }
               >
-                {locations.map((item, index) => {
+                {locations.map(item => {
                   return (
-                    <Menu.Item key={item.key} onClick={() => this.handleMarkerClick(item, index)}>
+                    <Menu.Item key={item.key} onClick={() => this.handleMenuItemClick(item)}>
                       <span>{item.description}</span>
                     </Menu.Item>
                   );
@@ -210,10 +259,14 @@ class App extends React.Component {
               }}
             >
               <Map
-                locations={locations}
+                zoom={mapOptions.zoom}
+                center={mapOptions.center}
+                clusters={clusters}
+                mapOptions={mapOptions}
+                handleMapChange={this.handleMapChange}
                 handleMapClick={this.handleMapClick}
-                handleClusterClick={this.handleClusterClick}
                 handleMarkerClick={this.handleMarkerClick}
+                isMarkerShown
               />
               <ModalWindow
                 handleOkCreator={this.handleOkCreator}
@@ -235,23 +288,29 @@ class App extends React.Component {
 
 App.propTypes = {
   locations: PropTypes.arrayOf(PropTypes.object),
-  getLocationsProps: PropTypes.func
+  clusters: PropTypes.arrayOf(PropTypes.object),
+  getLocationsProps: PropTypes.func,
+  getClustersProps: PropTypes.func
 };
 
 App.defaultProps = {
   locations: [],
-  getLocationsProps: noop
+  clusters: [],
+  getLocationsProps: noop,
+  getClustersProps: noop
 };
 
 function mapStateToProps(state) {
   return {
-    locations: state.locations
+    locations: state.locations,
+    clusters: state.clusters
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
-    getLocationsProps: newState => dispatch(getLocations(newState))
+    getLocationsProps: newState => dispatch(getLocations(newState)),
+    getClustersProps: data => dispatch(getClustersState(data))
   };
 }
 
