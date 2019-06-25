@@ -15,7 +15,7 @@ const Map = compose(
   withProps({
     googleMapURL: mapURL,
     loadingElement: <div style={{ height: '100%', width: '100%' }} />,
-    containerElement: <div style={{ height: '85vh', width: '100%' }} />,
+    containerElement: <div style={{ height: '90vh', width: '100%' }} />,
     mapElement: <div style={{ height: '100%', width: '100%' }} />
   }),
   withHandlers(props => {

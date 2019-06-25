@@ -3,7 +3,7 @@ import { message } from 'antd';
 
 const dbPromise = openDB('locations', 2, {
   upgrade(e) {
-    const thisDB = e.target.result;
+    const thisDB = e;
     if (!thisDB.objectStoreNames.contains('markers')) {
       thisDB.createObjectStore('markers', { keyPath: 'key' });
     }

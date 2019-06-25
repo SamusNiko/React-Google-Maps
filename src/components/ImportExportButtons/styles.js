@@ -1,7 +1,11 @@
 import styled from 'styled-components';
+import { Button } from 'antd';
 
-const StyledImportExport = styled.div`
+export const StyledImportExport = styled.div`
   text-align: center;
 `;
 
-export default StyledImportExport;
+export const StyledButton = styled(Button)`
+  padding: 5px;
+  width: 40%;
+`;

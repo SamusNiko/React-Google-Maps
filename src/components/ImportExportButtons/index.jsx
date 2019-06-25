@@ -1,31 +1,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import noop from 'react-props-noop';
-import { Button } from 'antd';
-import StyledImportExport from './styles';
+import { StyledImportExport, StyledButton } from './styles';
 
 const ImportExportButtons = props => {
   const { onExportClick, onImportClick } = props;
   return (
     <StyledImportExport>
-      <Button
-        type="primary"
-        size="small"
-        icon="export"
-        onClick={onExportClick}
-        style={{ margin: '5px' }}
-      >
+      <StyledButton type="primary" icon="export" onClick={onExportClick} style={{ margin: '5px' }}>
         Export
-      </Button>
-      <Button
-        size="small"
-        type="primary"
-        icon="import"
-        onClick={onImportClick}
-        style={{ margin: '5px' }}
-      >
+      </StyledButton>
+      <StyledButton type="primary" icon="import" onClick={onImportClick} style={{ margin: '5px' }}>
         Import
-      </Button>
+      </StyledButton>
     </StyledImportExport>
   );
 };

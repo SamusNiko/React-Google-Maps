@@ -1,8 +1,9 @@
 import React from 'react';
-import { Layout, message, Menu, Modal } from 'antd';
+import { Layout, message, Modal } from 'antd';
 import supercluster from 'points-cluster';
 import { Service } from '@/helper/indexedDB';
 import Map from '@/components/Map';
+import Logo from '@/components/Logo';
 import ModalWindow from '@/components/ModalWindow';
 import ModalImporter from '@/components/ModalImporter';
 import ImportExportButtons from '@/components/ImportExportButtons';
@@ -10,7 +11,7 @@ import MarkersList from '@/components/MarkersList';
 
 import './styles.css';
 
-const { Header, Content, Sider } = Layout;
+const { Content, Sider } = Layout;
 const { confirm } = Modal;
 
 const createCsvStringifier = require('csv-writer').createObjectCsvStringifier;
@@ -242,12 +243,7 @@ class App extends React.Component {
     const { isCreator, isRedactor, isImporter, inputValue, locations, clusters } = this.state;
     return (
       <Layout>
-        <Header className="header">
-          <div className="logo" />
-          <Menu theme="dark" mode="horizontal">
-            <Menu.Item key="1">Map</Menu.Item>
-          </Menu>
-        </Header>
+        <Logo />
         <Layout className="layoutSideMenu">
           <Sider className="sideMenu" style={{ background: '#fa7373' }}>
             <ImportExportButtons
