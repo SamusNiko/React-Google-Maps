@@ -3,7 +3,8 @@
     display: block;
   }
   .sideMenu {
-    display: inline;
+    max-width: 100vw !important;
+    width: 100vw !important;
   }
   .ant-menu-inline {
     border-right: none;

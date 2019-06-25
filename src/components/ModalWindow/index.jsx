@@ -97,7 +97,7 @@ ModalWindow.propTypes = {
   handleInputChange: PropTypes.func,
   handleOkCreator: PropTypes.func,
   handleDeleteRedactor: PropTypes.func,
-  inputValue: PropTypes.string
+  inputValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 ModalWindow.defaultProps = {

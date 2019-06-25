@@ -1,18 +1,22 @@
 import React from 'react';
-import { withScriptjs, withGoogleMap, GoogleMap, Marker } from 'react-google-maps';
-import { MarkerWithLabel } from 'react-google-maps/lib/components/addons/MarkerWithLabel';
+import { withScriptjs, withGoogleMap, GoogleMap } from 'react-google-maps';
 import { compose, withProps, withHandlers } from 'recompose';
+import ClusterMarker from '@/components/ClusterMarker';
+import Marker from '@/components/Marker';
 
 import { mapURL } from '@/constants';
 
-const iconUrl = require(`@/image/m5.png`);
+const defaultMapOptions = {
+  center: { lat: 53.904541, lng: 27.561523 },
+  zoom: 9
+};
 
 const Map = compose(
   withProps({
     googleMapURL: mapURL,
-    loadingElement: <div className="loadElem" style={{ height: '100%', width: '100%' }} />,
-    containerElement: <div className="containerElem" style={{ height: '85vh', width: '100%' }} />,
-    mapElement: <div className="mapElem" style={{ height: '100%', width: '100%' }} />
+    loadingElement: <div style={{ height: '100%', width: '100%' }} />,
+    containerElement: <div style={{ height: '85vh', width: '100%' }} />,
+    mapElement: <div style={{ height: '100%', width: '100%' }} />
   }),
   withHandlers(props => {
     const refs = {
@@ -48,7 +52,48 @@ const Map = compose(
         refs.map.fitBounds(bounds);
       },
       mapChanged: () => () => {
-        const { bounds } = props.mapOptions;
+        const bounds = {
+          ne: {
+            lat: refs.map
+              .getBounds()
+              .getNorthEast()
+              .lat(),
+            lng: refs.map
+              .getBounds()
+              .getNorthEast()
+              .lng()
+          },
+          nw: {
+            lat: refs.map
+              .getBounds()
+              .getNorthEast()
+              .lat(),
+            lng: refs.map
+              .getBounds()
+              .getSouthWest()
+              .lng()
+          },
+          se: {
+            lat: refs.map
+              .getBounds()
+              .getSouthWest()
+              .lat(),
+            lng: refs.map
+              .getBounds()
+              .getNorthEast()
+              .lng()
+          },
+          sw: {
+            lat: refs.map
+              .getBounds()
+              .getSouthWest()
+              .lat(),
+            lng: refs.map
+              .getBounds()
+              .getSouthWest()
+              .lng()
+          }
+        };
         const zoom = refs.map.getZoom();
         const center = { lat: refs.map.getCenter().lat(), lng: refs.map.getCenter().lng() };
         props.handleMapChange({ center, zoom, bounds });
@@ -58,47 +103,20 @@ const Map = compose(
   withScriptjs,
   withGoogleMap
 )(props => {
-  const { clusters, zoom, center } = props;
+  const { clustersOfMarkers, handleClusterClick, handleMarkerClick } = props;
   return (
     <GoogleMap
       ref={props.onMapMounted}
-      defaultZoom={zoom}
-      defaultCenter={center}
+      defaultZoom={defaultMapOptions.zoom}
+      defaultCenter={defaultMapOptions.center}
       onClick={props.handleMapClick}
       onIdle={props.mapChanged}
     >
-      {clusters.map(item => {
+      {clustersOfMarkers.map(item => {
         if (item.numPoints === 1) {
-          return (
-            <Marker
-              key={item.id}
-              onClick={() => props.handleMarkerClick(item)}
-              position={{ lat: item.points[0].lat, lng: item.points[0].lng }}
-            />
-          );
+          return <Marker key={item.id} item={item} onClick={handleMarkerClick} />;
         }
-        return (
-          <MarkerWithLabel
-            labelAnchor={new window.google.maps.Point(10, 13)}
-            labelStyle={{
-              width: '20px',
-              height: '20px',
-              textAlign: 'center',
-              fontSize: '14px',
-              pointerEvents: 'none'
-            }}
-            icon={{
-              url: iconUrl,
-              scaledSize: new window.google.maps.Size(50, 50),
-              anchor: new window.google.maps.Point(25, 30)
-            }}
-            key={item.id}
-            onClick={() => props.handleClusterClick(item)}
-            position={{ lat: item.lat, lng: item.lng }}
-          >
-            <div>{item.numPoints}</div>
-          </MarkerWithLabel>
-        );
+        return <ClusterMarker key={item.id} item={item} onClick={handleClusterClick} />;
       })}
     </GoogleMap>
   );
