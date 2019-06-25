@@ -1,9 +1,12 @@
 import { openDB } from 'idb';
 import { message } from 'antd';
 
-const dbPromise = openDB('locations', 2, upgradeDb => {
-  if (!upgradeDb.objectStoreNames.contains('markers')) {
-    upgradeDb.createObjectStore('markers', { keyPath: 'key' });
+const dbPromise = openDB('locations', 2, {
+  upgrade(e) {
+    const thisDB = e.target.result;
+    if (!thisDB.objectStoreNames.contains('markers')) {
+      thisDB.createObjectStore('markers', { keyPath: 'key' });
+    }
   }
 });
 
