@@ -1,13 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from '@/components/App';
+import Wrapper from '@/hoc';
 import * as serviceWorker from '@/serviceWorker';
 
-const app = (
-  <div>
-    <App />
-  </div>
-);
+const app = <Wrapper />;
 
 ReactDOM.render(app, document.getElementById('root'));
 

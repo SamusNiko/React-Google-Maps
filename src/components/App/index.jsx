@@ -1,13 +1,14 @@
 import React from 'react';
 import { Layout, message, Modal } from 'antd';
 import supercluster from 'points-cluster';
-import { Service } from '@/helper/indexedDB';
+import PropTypes from 'prop-types';
 import Map from '@/components/Map';
-import Logo from '@/components/Logo';
 import ModalWindow from '@/components/ModalWindow';
 import ModalImporter from '@/components/ModalImporter';
-import ImportExportButtons from '@/components/ImportExportButtons';
+import PrimaryButton from '@/components/Buttons/PrimaryButton';
 import MarkersList from '@/components/MarkersList';
+import { dataBaseURL } from '@/constants';
+import axios from 'axios';
 
 import './styles.css';
 
@@ -27,7 +28,7 @@ class App extends React.Component {
     super(props);
     this.state = {
       event: null,
-      currentItemKey: null,
+      currentItemId: null,
       locations: [],
       clusters: [],
       inputValue: '',
@@ -47,9 +48,22 @@ class App extends React.Component {
   }
 
   getLocations = () => {
-    Service.getAll()
-      .then(data => this.setState({ locations: data }))
-      .then(() => this.createClusters());
+    const { userData } = this.props;
+    const loca = [];
+    axios
+      .get(`${dataBaseURL}/locations/${userData.localId}.json`)
+      .then(response => {
+        if (response.data) {
+          Object.keys(response.data).forEach(key => loca.push({ ...response.data[key], id: key }));
+          this.setState({ locations: loca });
+        }
+      })
+      .then(() => {
+        this.createClusters();
+      })
+      .catch(error => {
+        message.error(error);
+      });
   };
 
   getClusters = () => {
@@ -89,14 +103,14 @@ class App extends React.Component {
   handleMarkerClick = item => {
     const currentMarker = item.points[0];
     this.setState({
-      currentItemKey: currentMarker.key,
+      currentItemId: currentMarker.id,
       inputValue: currentMarker.description
     });
     this.showRedactor();
   };
 
   handleMenuItemClick = item => {
-    this.setState({ currentItemKey: item.key, inputValue: item.description });
+    this.setState({ currentItemId: item.id, inputValue: item.description });
     this.showRedactor();
   };
 
@@ -111,6 +125,7 @@ class App extends React.Component {
 
   handleOkCreator = () => {
     const { event, inputValue } = this.state;
+    const { userData } = this.props;
     const lat = event.latLng.lat();
     const lng = event.latLng.lng();
     const newMarker = {
@@ -120,7 +135,12 @@ class App extends React.Component {
       description: inputValue
     };
     if (newMarker.description !== '') {
-      Service.add(newMarker).then(() => this.getLocations());
+      axios
+        .post(`${dataBaseURL}/locations/${userData.localId}.json`, newMarker)
+        .then(() => this.getLocations())
+        .catch(error => {
+          message.error(error);
+        });
       this.setState({ inputValue: '', event: null, isCreator: false });
     } else {
       message.warning('Please, enter description');
@@ -172,45 +192,64 @@ class App extends React.Component {
     });
   };
 
-  handleOkImpoter = (data, isClear) => {
+  handleOkImpoter = async (data, isClear) => {
+    const { userData } = this.props;
     if (data) {
       if (data && isClear) {
-        Service.clear()
+        await axios
+          .delete(`${dataBaseURL}/locations/${userData.localId}.json`)
+          .then(
+            data.map(item => axios.post(`${dataBaseURL}/locations/${userData.localId}.json`, item))
+          )
           .then(() => {
-            data.map(item => Service.add(item));
-          })
-          .then(() => this.getLocations());
+            this.getLocations();
+          });
       } else {
-        Service.getAllKeys().then(keys => {
-          this.addNewMarkers(data, keys);
-        });
+        this.addNewMarkers(data);
       }
     }
     this.setState({ isImporter: false });
   };
 
-  addNewMarkers = (newLocation, keys) => {
+  addNewMarkers = newLocation => {
+    const { userData } = this.props;
+    const { locations } = this.state;
     for (let i = 0; i < newLocation.length; i += 1) {
       if (newLocation[i].key) {
         let isEquals = false;
-        for (let j = 0; j < keys.length; j += 1) {
-          if (newLocation[i].key === keys[j]) {
+        for (let j = 0; j < locations.length; j += 1) {
+          if (newLocation[i].key === locations[j].key) {
             isEquals = true;
             break;
           }
         }
         if (isEquals === false) {
-          Service.add(newLocation[i]).then(() => this.getLocations());
+          axios
+            .post(`${dataBaseURL}/locations/${userData.localId}.json`, newLocation[i])
+            .then(() => this.getLocations())
+            .catch(error => {
+              message.error(error);
+            });
         }
       }
     }
   };
 
   handleSaveRedactor = () => {
-    const { currentItemKey, inputValue, locations } = this.state;
-    const currentMarker = locations.find(item => item.key === currentItemKey);
+    const { currentItemId, inputValue, locations } = this.state;
+    const { userData } = this.props;
+    const currentMarker = locations.find(item => item.id === currentItemId);
     currentMarker.description = inputValue;
-    Service.update(currentMarker).then(() => this.getLocations());
+    const updatedMarker = {
+      description: currentMarker.description,
+      key: currentMarker.key,
+      lat: currentMarker.lat,
+      lng: currentMarker.lng
+    };
+    axios
+      .patch(`${dataBaseURL}/locations/${userData.localId}/${currentItemId}.json`, updatedMarker)
+      .then(() => this.getLocations())
+      .catch(error => message.error(error));
     this.setState({
       isRedactor: false,
       inputValue: '',
@@ -219,8 +258,11 @@ class App extends React.Component {
   };
 
   handleDeleteRedactor = () => {
-    const { currentItemKey } = this.state;
-    Service.delete(currentItemKey).then(() => this.getLocations());
+    const { currentItemId } = this.state;
+    const { userData } = this.props;
+    axios.delete(`${dataBaseURL}/locations/${userData.localId}/${currentItemId}.json`).then(() => {
+      this.getLocations();
+    });
     this.setState({
       inputValue: '',
       isRedactor: false
@@ -242,46 +284,55 @@ class App extends React.Component {
   render() {
     const { isCreator, isRedactor, isImporter, inputValue, locations, clusters } = this.state;
     return (
-      <Layout>
-        <Logo />
-        <Layout className="layoutSideMenu">
-          <Sider className="sideMenu" style={{ background: '#fa7373' }}>
-            <ImportExportButtons
-              onExportClick={this.showExportConfirm}
-              onImportClick={this.handleImportClick}
+      <Layout className="layoutSideMenu">
+        <Sider className="sideMenu" style={{ background: '#fa7373' }}>
+          <PrimaryButton type="primary" icon="export" onClick={this.handleExportClick}>
+            Export
+          </PrimaryButton>
+          <PrimaryButton type="primary" icon="import" onClick={this.handleImportClick}>
+            Import
+          </PrimaryButton>
+          <MarkersList locations={locations} onClick={this.handleMenuItemClick} />
+        </Sider>
+        <Layout>
+          <Content>
+            <Map
+              clustersOfMarkers={clusters}
+              handleMapChange={this.handleMapChange}
+              handleMapClick={this.handleMapClick}
+              handleMarkerClick={this.handleMarkerClick}
+              isMarkerShown
             />
-            <MarkersList locations={locations} onClick={this.handleMenuItemClick} />
-          </Sider>
-          <Layout>
-            <Content>
-              <Map
-                clustersOfMarkers={clusters}
-                handleMapChange={this.handleMapChange}
-                handleMapClick={this.handleMapClick}
-                handleMarkerClick={this.handleMarkerClick}
-                isMarkerShown
-              />
-              <ModalWindow
-                handleOkCreator={this.handleOkCreator}
-                isCreator={isCreator}
-                handleDeleteRedactor={this.handleDeleteRedactor}
-                handleCancel={this.handleCancel}
-                handleSaveRedactor={this.handleSaveRedactor}
-                isRedactor={isRedactor}
-                inputValue={inputValue}
-                handleInputChange={this.handleInputChange}
-              />
-              <ModalImporter
-                isImporter={isImporter}
-                handleOk={this.handleOkImpoter}
-                handleCancel={this.handleCancel}
-              />
-            </Content>
-          </Layout>
+            <ModalWindow
+              handleOkCreator={this.handleOkCreator}
+              isCreator={isCreator}
+              handleDeleteRedactor={this.handleDeleteRedactor}
+              handleCancel={this.handleCancel}
+              handleSaveRedactor={this.handleSaveRedactor}
+              isRedactor={isRedactor}
+              inputValue={inputValue}
+              handleInputChange={this.handleInputChange}
+            />
+            <ModalImporter
+              isImporter={isImporter}
+              handleOk={this.handleOkImpoter}
+              handleCancel={this.handleCancel}
+            />
+          </Content>
         </Layout>
       </Layout>
     );
   }
 }
+
+App.propTypes = {
+  userData: PropTypes.shape({
+    email: PropTypes.string,
+    localId: PropTypes.string
+  })
+};
+App.defaultProps = {
+  userData: {}
+};
 
 export default App;

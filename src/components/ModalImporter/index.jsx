@@ -21,24 +21,27 @@ class ModalImporter extends Component {
     this.setState({ isChecked: e.target.checked });
   };
 
+  handleOkClick = () => {
+    const { importedData, isChecked } = this.state;
+    const { handleOk } = this.props;
+    handleOk(importedData, isChecked);
+  };
+
   render() {
-    const { isImporter, handleOk, handleCancel } = this.props;
-    const { isChecked, importedData } = this.state;
+    const { isImporter, handleCancel } = this.props;
     return (
       <div>
         <Modal
           title="Import locations"
           visible={isImporter}
-          onOk={() => handleOk(importedData, isChecked)}
+          onOk={this.handleOkClick}
           onCancel={handleCancel}
         >
           <CSVReader
             onFileLoaded={this.handleForce}
             parserOptions={{ header: true, dynamicTyping: true }}
           />
-          <Checkbox onChange={this.handleChangeCheckbox}>
-            Empty all : {isChecked.toString()}
-          </Checkbox>
+          <Checkbox onChange={this.handleChangeCheckbox}>Empty all</Checkbox>
         </Modal>
       </div>
     );

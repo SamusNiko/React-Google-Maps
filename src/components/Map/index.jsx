@@ -3,20 +3,16 @@ import { withScriptjs, withGoogleMap, GoogleMap } from 'react-google-maps';
 import { compose, withProps, withHandlers } from 'recompose';
 import ClusterMarker from '@/components/ClusterMarker';
 import Marker from '@/components/Marker';
-
-import { mapURL } from '@/constants';
-
-const defaultMapOptions = {
-  center: { lat: 53.904541, lng: 27.561523 },
-  zoom: 9
-};
+import { LoadingElement, ContainerElement, MapElement } from './styles';
+import { getMapBounds } from '@/helper/getBounds';
+import { DEFAULT_CENTER_COORDINATES, DEFAULT_MAP_ZOOM, mapURL } from '@/constants';
 
 const Map = compose(
   withProps({
     googleMapURL: mapURL,
-    loadingElement: <div style={{ height: '100%', width: '100%' }} />,
-    containerElement: <div style={{ height: '90vh', width: '100%' }} />,
-    mapElement: <div style={{ height: '100%', width: '100%' }} />
+    loadingElement: <LoadingElement />,
+    containerElement: <ContainerElement />,
+    mapElement: <MapElement />
   }),
   withHandlers(props => {
     const refs = {
@@ -52,48 +48,7 @@ const Map = compose(
         refs.map.fitBounds(bounds);
       },
       mapChanged: () => () => {
-        const bounds = {
-          ne: {
-            lat: refs.map
-              .getBounds()
-              .getNorthEast()
-              .lat(),
-            lng: refs.map
-              .getBounds()
-              .getNorthEast()
-              .lng()
-          },
-          nw: {
-            lat: refs.map
-              .getBounds()
-              .getNorthEast()
-              .lat(),
-            lng: refs.map
-              .getBounds()
-              .getSouthWest()
-              .lng()
-          },
-          se: {
-            lat: refs.map
-              .getBounds()
-              .getSouthWest()
-              .lat(),
-            lng: refs.map
-              .getBounds()
-              .getNorthEast()
-              .lng()
-          },
-          sw: {
-            lat: refs.map
-              .getBounds()
-              .getSouthWest()
-              .lat(),
-            lng: refs.map
-              .getBounds()
-              .getSouthWest()
-              .lng()
-          }
-        };
+        const bounds = getMapBounds(refs);
         const zoom = refs.map.getZoom();
         const center = { lat: refs.map.getCenter().lat(), lng: refs.map.getCenter().lng() };
         props.handleMapChange({ center, zoom, bounds });
@@ -107,8 +62,8 @@ const Map = compose(
   return (
     <GoogleMap
       ref={props.onMapMounted}
-      defaultZoom={defaultMapOptions.zoom}
-      defaultCenter={defaultMapOptions.center}
+      defaultZoom={DEFAULT_MAP_ZOOM}
+      defaultCenter={DEFAULT_CENTER_COORDINATES}
       onClick={props.handleMapClick}
       onIdle={props.mapChanged}
     >
